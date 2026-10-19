@@ -149,6 +149,9 @@ abstract final class AppTheme {
       // 입력칸: 밝은 면 위에 테두리, 선택하면 주색으로 강조.
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
+        // 안내 문구가 길어도 잘리지 않게 두 줄까지 보여 준다.
+        errorMaxLines: 2,
+        helperMaxLines: 2,
         fillColor: AppColors.surface,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.md,

@@ -27,6 +27,17 @@ void main() {
       expect(Validators.newPassword('coffee1234'), isNull);
       expect(Validators.confirmPassword('a', 'b'), '비밀번호가 서로 달라요.');
     });
+
+    test('이름은 한글로 받고, 이메일·비밀번호에 한글이 들어가면 키보드를 바꾸라고 알려 준다', () {
+      expect(Validators.name('김모아'), isNull);
+      // 한국어 자판으로 moa@cafe.kr 를 치면 이렇게 들어간다
+      expect(Validators.email('ㅡㅐㅁ@ㅊㅁㄹㄷ.ㅏㄱ'), Validators.hangulInEmail);
+      expect(Validators.email('모아@카페.kr'), Validators.hangulInEmail);
+      expect(Validators.email('moa@cafe'), '이메일 형식이 맞지 않아요.');
+      expect(Validators.email('moa.kim@cafe.co.kr'), isNull);
+      expect(Validators.newPassword('채ㄹㄹㄷㄷ1234'), Validators.hangulInPassword);
+      expect(Validators.requiredPassword('ㅊㅁㄹㄷ'), Validators.hangulInPassword);
+    });
   });
 
   group('LocalAuthRepository', () {
@@ -256,6 +267,39 @@ void main() {
 
       expect(find.byType(HomeScreen), findsOneWidget);
       expect(find.text('가입을 환영해요! 쿠폰함에 가입 축하 쿠폰을 넣어 드렸어요.'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('한글 이름으로 가입되고, 이메일에 한글이 들어가면 안내한다', (tester) async {
+      await pumpLoggedOut(tester);
+      await tester.tap(find.text('회원가입'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(field('이름'), '김모아');
+      await tester.enterText(field('이메일'), 'ㅡㅐㅁ@ㅊㅁㄹㄷ.ㅏㄱ');
+      await tester.enterText(field('비밀번호'), 'coffee1234');
+      await tester.enterText(field('비밀번호 확인'), 'coffee1234');
+      await tester.ensureVisible(find.text('약관에 모두 동의해요'));
+      await tester.tap(find.text('약관에 모두 동의해요'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('가입하기'));
+      await tester.pumpAndSettle();
+      expect(find.text(Validators.hangulInEmail), findsOneWidget);
+
+      await tester.enterText(field('이메일'), 'moa@cafe.kr');
+      await tester.tap(find.text('가입하기'));
+      await tester.pumpAndSettle();
+      expect(find.byType(HomeScreen), findsOneWidget);
+
+      await tester.tap(
+        find.descendant(
+          of: find.byType(NavigationBar),
+          matching: find.text('내 정보'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('김모아님'), findsOneWidget);
       await tester.pump(const Duration(seconds: 5));
       await tester.pumpAndSettle();
     });
